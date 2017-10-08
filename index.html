@@ -93,7 +93,7 @@
 
                 // 横轴依照button和性别分类
                 var x = myChart.addCategoryAxis("x", [button, "Sex"]);
-                x.title = button_label;
+                x.title = "Gender(female/male) and " + button_label;
                 x.fontSize = "auto";
                 // 对Age按照分类的年龄大小排序
                 if (button_label === "Age Group"){
