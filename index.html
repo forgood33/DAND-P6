@@ -13,10 +13,12 @@
     /* 按钮组设定 */
     div.type_buttons {
         margin: -20px;
-        width: 30%;
-        position: relative;
-        left: 38%;
+        width: 12%;
+        top: 30%;
+        position: fixed;
+        left: 78%;
         font: 14px sans-serif;
+        text-align: center;
     }
     div.type_buttons div {
         background-color: gray;
@@ -25,7 +27,6 @@
         /* 按钮间距 */
         margin: 10px;
         /* 按钮从左到右排列 */
-        float: left;
     }
     div.text {
         font: 14px sans-serif;
@@ -46,8 +47,9 @@
             The data of Titanic passengers is grouped by the gender firstly,
             and then grouped by ticket class, # of siblings / spouses aboard
             the Titanic, and age group(child(age < 13), teen(13 <= age < 19),
-            adult(19 <= age < 61), elders(age > 65)). Click the buttons below to
-            see the survival and dead rate in different passenger groups.
+            adult(19 <= age < 61), elders(age > 65)). Click the buttons on the
+            right to see the survival and dead rate in different passenger
+            groups.
         </p>
     </div>
 </body>
@@ -58,6 +60,38 @@
         d3.csv("titanic_modified.csv", function (data) {
             // 按钮的标签
             var button_labels = ['Age Group', 'Ticket Class', 'Number of Siblings'];
+
+                            // 创建按钮，并且以button_labels赋值
+                            var buttons = d3.select("body")
+                                            .append("div")
+                                            .attr("class", "type_buttons")
+                                            .selectAll("div")
+                                            .data(button_labels)
+                                            .enter()
+                                            .append("div")
+                                            .text(function(d) {
+                                                return d;
+                                            });
+
+                            // 点击的前后变化
+                            buttons.on("click", function(d) {
+                                // 按钮点击前
+                                d3.select(".type_buttons")
+                                    .selectAll("div")
+                                    .transition()
+                                    .duration(500)
+                                    .style("color", "black")
+                                    .style("background", "gray");
+
+                                // 按钮点击后
+                                d3.select(this)
+                                    .transition()
+                                    .duration(500)
+                                    .style("background", "rgb(112, 30, 94)")
+                                    .style("color", "white");
+
+                                button_label = update_button(d);
+                            });
 
             // 点击按钮后生成新图
             function update_button(label) {
@@ -135,38 +169,6 @@
                     };
                     return myChart;
                 };
-
-                // 创建按钮，并且以button_labels赋值
-                var buttons = d3.select("body")
-                                .append("div")
-                                .attr("class", "type_buttons")
-                                .selectAll("div")
-                                .data(button_labels)
-                                .enter()
-                                .append("div")
-                                .text(function(d) {
-                                    return d;
-                                });
-
-                // 点击的前后变化
-                buttons.on("click", function(d) {
-                    // 按钮点击前
-                    d3.select(".type_buttons")
-                        .selectAll("div")
-                        .transition()
-                        .duration(500)
-                        .style("color", "black")
-                        .style("background", "gray");
-
-                    // 按钮点击后
-                    d3.select(this)
-                        .transition()
-                        .duration(500)
-                        .style("background", "rgb(112, 30, 94)")
-                        .style("color", "white");
-
-                    button_label = update_button(d);
-                });
 
         var svg = dimple.newSvg("#chartContainer", 800, 600);
         var myChart = new dimple.chart(svg, data);
