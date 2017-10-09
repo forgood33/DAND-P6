@@ -1,0 +1,175 @@
+<head>
+  <script src="http://d3js.org/d3.v4.min.js"></script>
+  <script src="http://dimplejs.org/dist/dimple.v2.3.0.min.js"></script>
+</head>
+
+<style>
+      div.main_title {
+          font: 20px sans-serif;
+          color: rgb(112, 30, 94);
+          /* 标题居中 */
+          text-align: center;
+      }
+      /* 按钮组设定 */
+      div.type_buttons {
+          margin: -20px;
+          position: relative;
+          left: 38%;
+          font: 12px sans-serif;
+      }
+      div.type_buttons div {
+          background-color: gray;
+          /* 按钮大小 */
+          padding: 5px;
+          /* 按钮间距 */
+          margin: 10px;
+          /* 按钮从左到右排列 */
+          float: left;
+      }
+      div.text {
+          font: 14px sans-serif;
+          margin-left: 25%;
+          width: 50%;
+      }
+</style>
+
+<body>
+    <header>
+        <div class = "main_title">
+            <h1> Who Died on Broad the Titanic? </h1>
+        </div>
+    </header>
+
+    <div class = "text">
+        <p align = "justify">
+            The data of Titanic passengers is grouped the gender firstly,
+            and then grouped by ticket class, # of siblings / spouses aboard
+            the Titanic, and age group(child(age < 13), teen(13 <= age < 19),
+            adult(19 <= age < 61), elders(age > 65)). Click the buttons below to
+            see the survival and dead rate in different passenger groups.
+        </p>
+    </div>
+</body>
+
+<div id="chartContainer">
+    <script type="text/javascript">
+        d3.select("#chartContainer").attr("align", "center");
+        d3.csv("titanic_modified.csv", function (data) {
+            // 按钮的标签
+            var button_labels = ['Age Group', 'Ticket Class', 'Number of Siblings'];
+
+            // 点击按钮后生成新图
+            function update_button(label) {
+                create_chart(label);
+                return label;
+            };
+
+            function create_chart(button_label){
+                // 清除上次的图
+                var chart = svg.selectAll('*').remove();
+
+                chart_data = data;
+
+                if (button_label === "Age Group"){
+                    // 选择Age Group后去掉没有age数据的数据点
+                    chart_data = data.filter(function(d) {
+                        return d.Age_group !== "";
+                    });
+                    var button = "Age_group";
+                } else if (button_label === "Ticket Class"){
+                    var button = "Pclass";
+                } else if (button_label === "Number of Siblings"){
+                    var button = "SibSp";
+                }
+
+                chart = draw_chart(button, button_label, chart_data);
+                // 增加一定的延时
+                chart.draw(500);
+            };
+
+            function draw_chart(button, button_label, chart_data){
+                var myChart = new dimple.chart(svg, chart_data);
+
+                // 横轴依照button和性别分类
+                var x = myChart.addCategoryAxis("x", [button, "Sex"]);
+                x.title = button_label;
+                x.fontSize = "auto";
+                // 对Age按照分类的年龄大小排序
+                if (button_label === "Age Group"){
+                    x.addOrderRule(["child", "teen", "adult", "senior"]);
+                };
+
+                // 纵轴分为生死的百分比
+                var y = myChart.addPctAxis("y", "Survived");
+                y.title = "Dead and Alive Rate";
+                y.fontSize = "auto";
+
+                // 把直方图划分为生死
+                var mySeries = myChart.addSeries("Status", dimple.plot.bar);
+                mySeries.aggregate = dimple.aggregateMethod.count;
+
+                myChart.addLegend(200, 20, 420, 20, "right").fontSize = "auto";
+
+                // 在直方图中添加相应人数
+                mySeries.afterDraw = function (shape, data) {
+                        var s = d3.select(shape),
+                            rect = {
+                                x: parseFloat(s.attr("x")),
+                                y: parseFloat(s.attr("y")),
+                                width: parseFloat(s.attr("width")),
+                                height: parseFloat(s.attr("height"))
+                            };
+
+                        if (rect.height >= 8) {
+                            svg.append("text")
+                                // 计算直方图的中心位置
+                                .attr("x", rect.x + rect.width / 2)
+                                .attr("y", rect.y + rect.height / 2 + 3.5)
+                                .style("text-anchor", "middle")
+                                .style("font-size", "12px")
+                                .style("font-family", "sans-serif")
+                                .style("opacity", 0.6)
+                                .text(data.yValue);
+                            }
+                        };
+                return myChart
+                };
+
+                // 创建按钮，并且以button_labels赋值
+                var buttons = d3.select("body")
+                                .append("div")
+                                .attr("class", "type_buttons")
+                                .selectAll("div")
+                                .data(button_labels)
+                                .enter()
+                                .append("div")
+                                .text(function(d) {
+                                    return d;
+                                });
+
+                // 点击的前后变化
+                buttons.on("click", function(d) {
+                    // 按钮点击前
+                    d3.select(".type_buttons")
+                        .selectAll("div")
+                        .transition()
+                        .duration(500)
+                        .style("color", "black")
+                        .style("background", "gray");
+
+                    // 按钮点击后
+                    d3.select(this)
+                        .transition()
+                        .duration(500)
+                        .style("background", "rgb(112, 30, 94)")
+                        .style("color", "white");
+
+                    button_label = update_button(d);
+                });
+
+
+        var svg = dimple.newSvg("#chartContainer", 800, 600);
+        var myChart = new dimple.chart(svg, data);
+    });
+  </script>
+</div>
